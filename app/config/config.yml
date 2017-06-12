@@ -68,3 +68,44 @@ swiftmailer:
     username: '%mailer_user%'
     password: '%mailer_password%'
     spool: { type: memory }
+
+# Stof extension
+# app/config/config.yml
+stof_doctrine_extensions:
+    default_locale: fr_FR
+    orm:
+        default:
+            timestampable: true
+
+# FOS Rest
+fos_rest:
+    routing_loader:
+        default_format: json
+        include_format: false
+    body_converter:
+        enabled: true
+    view:
+        mime_types:
+            json: ['application/json', 'application/json;version=1.0']
+        view_response_listener: 'force'
+        formats: { json: true, xml: false, rss: false }
+        view_response_listener: true
+    serializer:
+        serialize_null: false
+    format_listener:
+        rules:
+            - { path: '^/', priorities: ['json'], fallback_format: 'json' }
+    versioning:
+        enabled: true
+        resolvers:
+            media_type: # Accept header
+                enabled: true
+                regex: '/(v|version)=(?P<version>[0-9\.]+)/'
+
+#sensio_framework_extra:
+#    view: { annotations: false }
+sensio_framework_extra:
+    request: { converters: true }
+
+# API doc
+nelmio_api_doc: ~
