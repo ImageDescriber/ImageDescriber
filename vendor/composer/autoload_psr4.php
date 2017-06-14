@@ -44,5 +44,6 @@ return array(
     'Doctrine\\Bundle\\DoctrineBundle\\' => array($vendorDir . '/doctrine/doctrine-bundle'),
     'CoreSphere\\ConsoleBundle\\' => array($vendorDir . '/coresphere/console-bundle'),
     'Composer\\CaBundle\\' => array($vendorDir . '/composer/ca-bundle/src'),
+    'Bazinga\\Bundle\\HateoasBundle\\' => array($vendorDir . '/willdurand/hateoas-bundle'),
     '' => array($baseDir . '/src'),
 );

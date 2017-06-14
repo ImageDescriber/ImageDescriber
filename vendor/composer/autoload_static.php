@@ -87,6 +87,10 @@ class ComposerStaticInitce32f360f39707201d89a619cd8d8bbb
             'CoreSphere\\ConsoleBundle\\' => 25,
             'Composer\\CaBundle\\' => 18,
         ),
+        'B' => 
+        array (
+            'Bazinga\\Bundle\\HateoasBundle\\' => 29,
+        ),
     );
 
     public static $prefixDirsPsr4 = array (
@@ -242,6 +246,10 @@ class ComposerStaticInitce32f360f39707201d89a619cd8d8bbb
         array (
             0 => __DIR__ . '/..' . '/composer/ca-bundle/src',
         ),
+        'Bazinga\\Bundle\\HateoasBundle\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/willdurand/hateoas-bundle',
+        ),
     );
 
     public static $fallbackDirsPsr4 = array (
@@ -305,6 +313,13 @@ class ComposerStaticInitce32f360f39707201d89a619cd8d8bbb
             'JMS\\' => 
             array (
                 0 => __DIR__ . '/..' . '/jms/parser-lib/src',
+            ),
+        ),
+        'H' => 
+        array (
+            'Hateoas' => 
+            array (
+                0 => __DIR__ . '/..' . '/willdurand/hateoas/src',
             ),
         ),
         'G' => 

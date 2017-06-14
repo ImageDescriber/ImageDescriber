@@ -25,6 +25,7 @@ class AppKernel extends Kernel
             new Stof\DoctrineExtensionsBundle\StofDoctrineExtensionsBundle(),
             new FOS\RestBundle\FOSRestBundle(),
             new Nelmio\ApiDocBundle\NelmioApiDocBundle(),
+            new Bazinga\Bundle\HateoasBundle\BazingaHateoasBundle(),
             new AppBundle\AppBundle(),
             new DataBundle\DataBundle(),
         ];

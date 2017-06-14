@@ -101,6 +101,11 @@ fos_rest:
             media_type: # Accept header
                 enabled: true
                 regex: '/(v|version)=(?P<version>[0-9\.]+)/'
+    param_fetcher_listener: force
+    exception:
+        enabled: true
+        codes:
+           { DataBundle\Exception\ResourceValidationException: 400, DataBundle\Exception\NoContentException: 204 }
 
 #sensio_framework_extra:
 #    view: { annotations: false }

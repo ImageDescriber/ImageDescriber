@@ -83,7 +83,7 @@ class Entity
     /**
      * Get qwd
      *
-     * @return int
+     * @return integer
      */
     public function getQwd()
     {
