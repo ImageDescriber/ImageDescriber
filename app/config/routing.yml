@@ -1,5 +1,5 @@
 data:
-    resource: "@DataBundle/Controller/"
+    resource: "@DataBundle/Controller/DefaultController.php"
     type:     annotation
     prefix:   /
 
@@ -10,3 +10,7 @@ app:
 NelmioApiDocBundle:
     resource: "@NelmioApiDocBundle/Resources/config/routing.yml"
     prefix:   /doc
+
+entities:
+    type:     rest
+    resource: DataBundle\Controller\EntityController

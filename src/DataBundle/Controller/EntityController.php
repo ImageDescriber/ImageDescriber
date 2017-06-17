@@ -3,69 +3,63 @@
 namespace DataBundle\Controller;
 
 use DataBundle\Entity\Entity;
-use DataBundle\Exception\NoContentException;
-use DataBundle\Exception\ResourceValidationException;
+
+use DataBundle\Form\EntityType;
 use FOS\RestBundle\Controller\FOSRestController;
 use FOS\RestBundle\Controller\Annotations as Rest;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
-use FOS\RestBundle\Request\ParamFetcherInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
-use Symfony\Component\Validator\ConstraintViolationList;
+
+use FOS\RestBundle\Controller\Annotations\QueryParam;
+use FOS\RestBundle\Request\ParamFetcher;
+
 use Nelmio\ApiDocBundle\Annotation as Doc;
 
 class EntityController extends FOSRestController
 {
     /**
-     * @Rest\Get(
-     *     path = "/entities/qwd/{qwd}",
-     *     name = "data_entity_qwd",
-     *     requirements = {"qwd"="\d+"}
-     * )
-     * @Rest\View(statusCode = 200)
+     * @Rest\Get("/entities")
+     * @Rest\View()
+     *
+     * @QueryParam(name="qwd", requirements="\d+", default="", description="Identifier of Wikidata element")
+     * @QueryParam(name="random", requirements="false|true", default="false", description="Return a random item")
+     *
      * @Doc\ApiDoc(
      *     section="Entities",
      *     resource=true,
-     *     description="Return one entity",
-     *     requirements={
-     *         {
-     *             "name"="qwd",
-     *             "dataType"="string",
-     *             "requirement"="\d+",
-     *             "description"="The identifier of wikidata",
-     *         }
-     *     },
+     *     description="Get the list of all entities",
      *     statusCodes={
      *         200="Returned when fetched",
-     *         204="Returned when the content doesn't exist",
      *         400="Returned when a violation is raised by validation"
      *     }
      * )
-     *
      */
-    public function qwdAction($qwd)
+    public function getEntitiesAction(Request $request, ParamFetcher $paramFetcher)
     {
-        // ParamFetcher params can be dynamically added during runtime instead of only compile time annotations.
-        $em = $this->getDoctrine()->getManager();
-        $entity = $em->getRepository("DataBundle:Entity")->findOneByQwd($qwd);
+        $qwd = $paramFetcher->get('qwd');
+        $random = $paramFetcher->get('random');
 
-        if($entity == null) {
-            //throw new NoContentException("This content does not exist");
-            return new JsonResponse(null);
+        $repository = $this->getDoctrine()->getManager()->getRepository('DataBundle:Entity');
+        if($qwd != "") {
+            $entities = $repository->findBy(array("qwd" =>$qwd));
+        } elseif($random == "true") {
+            $entities = $repository->findAll();
+            $nbEntities = count($entities);
+            $randItem = $entities[rand(0, $nbEntities-1)];
+            $entities = [$randItem];
         } else {
-            return $entity;
+            $entities = $repository->findAll();
         }
+
+        /* @var $entities Entity[] */
+        return $entities;
     }
 
     /**
-     * @Rest\Get(
-     *     path = "/entities/{id}",
-     *     name = "data_entity_show",
-     *     requirements = {"id"="\d+"}
-     * )
-     * @Rest\View(statusCode = 200)
+     * @Rest\Get("/entities/{id}")
+     * @Rest\View
+     *
      * @Doc\ApiDoc(
      *     section="Entities",
      *     resource=true,
@@ -84,41 +78,23 @@ class EntityController extends FOSRestController
      *     }
      * )
      */
-    public function showAction(Entity $entity)
+    public function getEntityAction(Request $request)
     {
+        $em = $this->getDoctrine()->getManager();
+        $entity = $em->getRepository('DataBundle:Entity')->find($request->get('id'));
+        /* @var $entity Entity */
+
+        if (empty($entity)) {
+            return new JsonResponse(['message' => 'Entity not found'], Response::HTTP_NOT_FOUND);
+        }
+
         return $entity;
     }
 
     /**
-     * @Rest\Get(
-     *    path = "/entities",
-     *    name = "data_entity_list"
-     * )
-     * @Rest\View(StatusCode = 200)
-     * @Doc\ApiDoc(
-     *     section="Entities",
-     *     resource=true,
-     *     description="Get the list of all entities",
-     *     statusCodes={
-     *         200="Returned when fetched",
-     *         400="Returned when a violation is raised by validation"
-     *     }
-     * )
-     */
-    public function listAction()
-    {
-        $em = $this->getDoctrine()->getManager();
-
-        return $em->getRepository("DataBundle:Entity")->findAll();
-    }
-
-    /**
-     * @Rest\Post(
-     *    path = "/entities",
-     *    name = "data_entity_create"
-     * )
-     * @Rest\View(StatusCode = 201)
-     * @ParamConverter("entity", converter="fos_rest.request_body")
+     * @Rest\Post("/entities")
+     * @Rest\View(statusCode=Response::HTTP_CREATED)
+     *
      * @Doc\ApiDoc(
      *     section="Entities",
      *     resource=true,
@@ -143,40 +119,36 @@ class EntityController extends FOSRestController
      *     }
      * )
      */
-    public function createAction(Entity $entity)
+    public function postEntityAction(Request $request)
     {
-        //dump($entity); die;
         $em = $this->getDoctrine()->getManager();
-        $em->persist($entity);
-        $em->flush();
 
-        return $this->view($entity, Response::HTTP_CREATED, ['Location' => $this->generateUrl('data_entity_show', ['id' => $entity->getId(), UrlGeneratorInterface::ABSOLUTE_URL])]);
+        $entity = new Entity();
+        $form = $this->createForm(EntityType::class, $entity);
+        $form->submit($request->request->all());
+
+        if ($form->isValid()) {
+            $em->persist($entity);
+            $em->flush();
+            return $entity;
+        } else {
+            return $form;
+        }
     }
 
     /**
-     * @Rest\Put(
-     *    path = "/entities/{id}",
-     *    name = "data_entity_update",
-     *    requirements = {"id"="\d+"}
-     * )
-     * @Rest\View(StatusCode = 200)
-     * @ParamConverter("newEntity", converter="fos_rest.request_body")
+     * @Rest\View()
+     * @Rest\Put("/entities/{id}")
      * @Doc\ApiDoc(
      *     section="Entities",
      *     resource=true,
      *     description="Update an existing entity",
      *     requirements={
      *         {
-     *             "name"="qwd",
-     *             "dataType"="integer",
-     *             "requirement"="\d+",
-     *             "description"="The identifier of the painting."
-     *         },
-     *         {
-     *             "name"="listDepicts",
+     *             "name"="resources",
      *             "dataType"="array",
      *             "requirement"="",
-     *             "description"="List of the depicts of a painting."
+     *             "description"="The list of resources of the entity."
      *         }
      *     },
      *     statusCodes={
@@ -185,27 +157,64 @@ class EntityController extends FOSRestController
      *     }
      * )
      */
-    public function updateAction(Entity $entity, Entity $newEntity)
+    public function updateEntityAction(Request $request)
     {
-        $entity->setQwd($newEntity->getQwd());
-        $entity->setListDepicts($newEntity->getListDepicts());
-
-        $this->getDoctrine()->getManager()->flush();
-
-        return $entity;
+        return $this->updateEntity($request, true);
     }
 
     /**
-     * @Rest\Delete(
-     *     path = "/entities/{id}",
-     *     name = "data_entity_delete",
-     *     requirements = {"id"="\d+"}
-     * )
-     * @Rest\View(statusCode = 204)
+     * @Rest\View()
+     * @Rest\Patch("/entities/{id}")
      * @Doc\ApiDoc(
      *     section="Entities",
      *     resource=true,
-     *     description="Remove an entity",
+     *     description="Update an existing entity",
+     *     requirements={
+     *         {
+     *             "name"="resources",
+     *             "dataType"="array",
+     *             "requirement"="",
+     *             "description"="The list of resources of the entity."
+     *         }
+     *     },
+     *     statusCodes={
+     *         200="Returned when updated",
+     *         400="Returned when a violation is raised by validation"
+     *     }
+     * )
+     */
+    public function patchEntityAction(Request $request)
+    {
+        return $this->updateEntity($request, false);
+    }
+
+    private function updateEntity(Request $request, $clearMissing)
+    {
+        $em = $this->getDoctrine()->getManager();
+        $entity = $em->getRepository('DataBundle:Entity')
+            ->find($request->get('id'));
+        /* @var $entity Entity */
+        if (empty($entity)) {
+            return new JsonResponse(['message' => 'Entity not found'], Response::HTTP_NOT_FOUND);
+        }
+        $form = $this->createForm(EntityType::class, $entity);
+        $form->submit($request->request->all(), $clearMissing);
+        if ($form->isValid()) {
+            $em->persist($entity);
+            $em->flush();
+            return $entity;
+        } else {
+            return $form;
+        }
+    }
+
+    /**
+     * @Rest\Delete("/entities/{id}")
+     * @Rest\View(statusCode=Response::HTTP_NO_CONTENT)
+     * @Doc\ApiDoc(
+     *     section="Entities",
+     *     resource=true,
+     *     description="Remove a entity",
      *     requirements={
      *         {
      *             "name"="id",
@@ -220,11 +229,15 @@ class EntityController extends FOSRestController
      *     }
      * )
      */
-    public function deleteAction(Entity $entity)
+    public function removeEntityAction(Request $request)
     {
-        $this->getDoctrine()->getManager()->remove($entity);
-        $this->getDoctrine()->getManager()->flush();
+        $em = $this->getDoctrine()->getManager();
+        $entity = $em->getRepository('DataBundle:Entity')->find($request->get('id'));
+        /* @var $entity Entity */
 
-        return;
+        if ($entity) {
+            $em->remove($entity);
+            $em->flush();
+        }
     }
 }
