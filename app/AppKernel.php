@@ -27,7 +27,6 @@ class AppKernel extends Kernel
             new Nelmio\ApiDocBundle\NelmioApiDocBundle(),
             new Bazinga\Bundle\HateoasBundle\BazingaHateoasBundle(),
             new AppBundle\AppBundle(),
-            new DataBundle\DataBundle(),
         ];
 
         if (in_array($this->getEnvironment(), ['dev', 'test'], true)) {

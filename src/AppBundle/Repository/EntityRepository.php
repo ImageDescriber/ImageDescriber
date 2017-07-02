@@ -1,6 +1,6 @@
 <?php
 
-namespace DataBundle\Repository;
+namespace AppBundle\Repository;
 
 /**
  * EntityRepository

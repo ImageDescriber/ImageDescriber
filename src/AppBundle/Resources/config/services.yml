@@ -1,0 +1,5 @@
+services:
+    app.rank:
+        class: AppBundle\Services\Rank
+        arguments:
+            - '@doctrine.orm.entity_manager'

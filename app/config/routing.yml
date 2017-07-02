@@ -1,11 +1,7 @@
-data:
-    resource: "@DataBundle/Controller/DefaultController.php"
-    type:     annotation
-    prefix:   /
-
 app:
-    resource: '@AppBundle/Controller/'
+    resource: '@AppBundle/Controller/DefaultController.php'
     type: annotation
+    prefix:   /
 
 NelmioApiDocBundle:
     resource: "@NelmioApiDocBundle/Resources/config/routing.yml"
@@ -13,4 +9,12 @@ NelmioApiDocBundle:
 
 entities:
     type:     rest
-    resource: DataBundle\Controller\EntityController
+    resource: AppBundle\Controller\EntityController
+
+logs:
+    type:     rest
+    resource: AppBundle\Controller\LogController
+
+ranks:
+    type:     rest
+    resource: AppBundle\Controller\RankController

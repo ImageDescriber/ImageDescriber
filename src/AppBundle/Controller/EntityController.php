@@ -1,10 +1,11 @@
 <?php
 
-namespace DataBundle\Controller;
+namespace AppBundle\Controller;
 
-use DataBundle\Entity\Entity;
+use AppBundle\Entity\Entity;
 
-use DataBundle\Form\EntityType;
+use AppBundle\Form\EntityType;
+use AppBundle\Repository\EntityRepository;
 use FOS\RestBundle\Controller\FOSRestController;
 use FOS\RestBundle\Controller\Annotations as Rest;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -40,7 +41,8 @@ class EntityController extends FOSRestController
         $qwd = $paramFetcher->get('qwd');
         $random = $paramFetcher->get('random');
 
-        $repository = $this->getDoctrine()->getManager()->getRepository('DataBundle:Entity');
+        $repository = $this->getDoctrine()->getManager()->getRepository('AppBundle:Entity');
+        /* @var $repository EntityRepository */
         if($qwd != "") {
             $entities = $repository->findBy(array("qwd" =>$qwd));
         } elseif($random == "true") {
@@ -81,7 +83,7 @@ class EntityController extends FOSRestController
     public function getEntityAction(Request $request)
     {
         $em = $this->getDoctrine()->getManager();
-        $entity = $em->getRepository('DataBundle:Entity')->find($request->get('id'));
+        $entity = $em->getRepository('AppBundle:Entity')->find($request->get('id'));
         /* @var $entity Entity */
 
         if (empty($entity)) {
@@ -105,6 +107,12 @@ class EntityController extends FOSRestController
      *             "dataType"="integer",
      *             "requirement"="\d+",
      *             "description"="The identifier of the painting."
+     *         },
+     *         {
+     *             "name"="image",
+     *             "dataType"="url",
+     *             "requirement"="",
+     *             "description"="Url of the image of a painting."
      *         },
      *         {
      *             "name"="listDepicts",
@@ -145,10 +153,22 @@ class EntityController extends FOSRestController
      *     description="Update an existing entity",
      *     requirements={
      *         {
-     *             "name"="resources",
+     *             "name"="qwd",
+     *             "dataType"="integer",
+     *             "requirement"="\d+",
+     *             "description"="The identifier of the painting."
+     *         },
+     *         {
+     *             "name"="image",
+     *             "dataType"="url",
+     *             "requirement"="",
+     *             "description"="Url of the image of a painting."
+     *         },
+     *         {
+     *             "name"="listDepicts",
      *             "dataType"="array",
      *             "requirement"="",
-     *             "description"="The list of resources of the entity."
+     *             "description"="List of the depicts of a painting."
      *         }
      *     },
      *     statusCodes={
@@ -171,10 +191,22 @@ class EntityController extends FOSRestController
      *     description="Update an existing entity",
      *     requirements={
      *         {
-     *             "name"="resources",
+     *             "name"="qwd",
+     *             "dataType"="integer",
+     *             "requirement"="\d+",
+     *             "description"="The identifier of the painting."
+     *         },
+     *         {
+     *             "name"="image",
+     *             "dataType"="url",
+     *             "requirement"="",
+     *             "description"="Url of the image of a painting."
+     *         },
+     *         {
+     *             "name"="listDepicts",
      *             "dataType"="array",
      *             "requirement"="",
-     *             "description"="The list of resources of the entity."
+     *             "description"="List of the depicts of a painting."
      *         }
      *     },
      *     statusCodes={
@@ -191,16 +223,14 @@ class EntityController extends FOSRestController
     private function updateEntity(Request $request, $clearMissing)
     {
         $em = $this->getDoctrine()->getManager();
-        $entity = $em->getRepository('DataBundle:Entity')
-            ->find($request->get('id'));
+        $entity = $em->getRepository('AppBundle:Entity')->find($request->get('id'));
         /* @var $entity Entity */
-        if (empty($entity)) {
-            return new JsonResponse(['message' => 'Entity not found'], Response::HTTP_NOT_FOUND);
-        }
+        if (empty($entity)) {return new JsonResponse(['message' => 'Entity not found'], Response::HTTP_NOT_FOUND);}
+
         $form = $this->createForm(EntityType::class, $entity);
         $form->submit($request->request->all(), $clearMissing);
         if ($form->isValid()) {
-            $em->persist($entity);
+            $em->merge($entity);
             $em->flush();
             return $entity;
         } else {
@@ -214,7 +244,7 @@ class EntityController extends FOSRestController
      * @Doc\ApiDoc(
      *     section="Entities",
      *     resource=true,
-     *     description="Remove a entity",
+     *     description="Remove an entity",
      *     requirements={
      *         {
      *             "name"="id",
@@ -232,7 +262,7 @@ class EntityController extends FOSRestController
     public function removeEntityAction(Request $request)
     {
         $em = $this->getDoctrine()->getManager();
-        $entity = $em->getRepository('DataBundle:Entity')->find($request->get('id'));
+        $entity = $em->getRepository('AppBundle:Entity')->find($request->get('id'));
         /* @var $entity Entity */
 
         if ($entity) {

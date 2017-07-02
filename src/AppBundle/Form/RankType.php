@@ -1,14 +1,13 @@
 <?php
 
-namespace DataBundle\Form;
+namespace AppBundle\Form;
 
 use Symfony\Component\Form\AbstractType;
-use Symfony\Component\Form\Extension\Core\Type\TextType;
-use Symfony\Component\Form\Extension\Core\Type\UrlType;
+use Symfony\Component\Form\Extension\Core\Type\IntegerType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
-class EntityType extends AbstractType
+class RankType extends AbstractType
 {
     /**
      * {@inheritdoc}
@@ -16,9 +15,7 @@ class EntityType extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
         $builder
-            ->add('qwd',        TextType::class, array("required" => true))
-            ->add('image',      UrlType::class, array("required" => true))
-            ->add('listDepicts',TextType::class, array("required" => true))
+            ->add('value', IntegerType::class, array('required' => true))
         ;
     }
     
@@ -28,7 +25,7 @@ class EntityType extends AbstractType
     public function configureOptions(OptionsResolver $resolver)
     {
         $resolver->setDefaults(array(
-            'data_class' => 'DataBundle\Entity\Entity',
+            'data_class' => 'AppBundle\Entity\Rank',
             'csrf_protection' => false
         ));
     }
@@ -38,7 +35,7 @@ class EntityType extends AbstractType
      */
     public function getBlockPrefix()
     {
-        return 'databundle_entity';
+        return 'appbundle_rank';
     }
 
 

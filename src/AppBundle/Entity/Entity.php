@@ -1,6 +1,6 @@
 <?php
 
-namespace DataBundle\Entity;
+namespace AppBundle\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Mapping\Annotation as Gedmo;
@@ -13,7 +13,7 @@ use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
  * Entity
  *
  * @ORM\Table(name="entity")
- * @ORM\Entity(repositoryClass="DataBundle\Repository\EntityRepository")
+ * @ORM\Entity(repositoryClass="AppBundle\Repository\EntityRepository")
  *
  * @Serializer\ExclusionPolicy("all")
  *
@@ -86,7 +86,7 @@ class Entity
      * @Assert\NotBlank()
      * @Assert\Url()
      *
-     * @ORM\Column(name="image", type="string", unique=true)
+     * @ORM\Column(name="image", type="text")
      */
     private $image;
 
@@ -110,6 +110,14 @@ class Entity
      * @ORM\Column(name="createDate", type="datetime", nullable=false)
      */
     protected $createDate;
+
+    /**
+     * @Serializer\Since("1.0")
+     * @Serializer\Expose
+     *
+     * @ORM\OneToMany(targetEntity="Log", mappedBy="entity", cascade={"persist", "remove"})
+     */
+    private $logs;
 
 
     /**
@@ -216,5 +224,46 @@ class Entity
     public function getImage()
     {
         return $this->image;
+    }
+    /**
+     * Constructor
+     */
+    public function __construct()
+    {
+        $this->logs = new \Doctrine\Common\Collections\ArrayCollection();
+    }
+
+    /**
+     * Add log
+     *
+     * @param \AppBundle\Entity\Log $log
+     *
+     * @return Entity
+     */
+    public function addLog(\AppBundle\Entity\Log $log)
+    {
+        $this->logs[] = $log;
+
+        return $this;
+    }
+
+    /**
+     * Remove log
+     *
+     * @param \AppBundle\Entity\Log $log
+     */
+    public function removeLog(\AppBundle\Entity\Log $log)
+    {
+        $this->logs->removeElement($log);
+    }
+
+    /**
+     * Get logs
+     *
+     * @return \Doctrine\Common\Collections\Collection
+     */
+    public function getLogs()
+    {
+        return $this->logs;
     }
 }
