@@ -1,0 +1,20 @@
+services:
+    user.form.registration:
+        class: UserBundle\Form\RegistrationType
+        tags:
+            - { name: form.type, alias: user_registration }
+
+    user.form.profile:
+        class: UserBundle\Form\ProfileType
+        tags:
+            - { name: form.type, alias: user_profile }
+    user.user:
+        class: UserBundle\Services\User
+        arguments:
+            - '@doctrine.orm.entity_manager'
+    user.listener.registration:
+        class: UserBundle\EventListener\RegistrationListener
+        arguments:
+            - '@doctrine.orm.entity_manager'
+        tags:
+            - { name: kernel.event_subscriber }

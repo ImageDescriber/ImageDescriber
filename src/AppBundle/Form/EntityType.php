@@ -19,6 +19,7 @@ class EntityType extends AbstractType
             ->add('qwd',        TextType::class, array("required" => true))
             ->add('image',      UrlType::class, array("required" => true))
             ->add('listDepicts',TextType::class, array("required" => true))
+            ->add('keywords',   TextType::class, array("required" => false))
         ;
     }
     

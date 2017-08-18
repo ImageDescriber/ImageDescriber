@@ -53,6 +53,10 @@ class ComposerStaticInitce32f360f39707201d89a619cd8d8bbb
             'Psr\\Container\\' => 14,
             'Psr\\Cache\\' => 10,
         ),
+        'O' => 
+        array (
+            'OAuth2\\' => 7,
+        ),
         'N' => 
         array (
             'Negotiation\\' => 12,
@@ -72,7 +76,9 @@ class ComposerStaticInitce32f360f39707201d89a619cd8d8bbb
         'F' => 
         array (
             'Fig\\Link\\' => 9,
+            'FOS\\UserBundle\\' => 15,
             'FOS\\RestBundle\\' => 15,
+            'FOS\\OAuthServerBundle\\' => 22,
         ),
         'D' => 
         array (
@@ -194,6 +200,10 @@ class ComposerStaticInitce32f360f39707201d89a619cd8d8bbb
         array (
             0 => __DIR__ . '/..' . '/psr/cache/src',
         ),
+        'OAuth2\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/friendsofsymfony/oauth2-php/lib',
+        ),
         'Negotiation\\' => 
         array (
             0 => __DIR__ . '/..' . '/willdurand/negotiation/src/Negotiation',
@@ -214,9 +224,17 @@ class ComposerStaticInitce32f360f39707201d89a619cd8d8bbb
         array (
             0 => __DIR__ . '/..' . '/fig/link-util/src',
         ),
+        'FOS\\UserBundle\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/friendsofsymfony/user-bundle',
+        ),
         'FOS\\RestBundle\\' => 
         array (
             0 => __DIR__ . '/..' . '/friendsofsymfony/rest-bundle',
+        ),
+        'FOS\\OAuthServerBundle\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/friendsofsymfony/oauth-server-bundle',
         ),
         'Doctrine\\Instantiator\\' => 
         array (

@@ -3,6 +3,7 @@ imports:
     - { resource: security.yml }
     - { resource: services.yml }
     - { resource: "@AppBundle/Resources/config/services.yml" }
+    - { resource: "@UserBundle/Resources/config/services.yml" }
 
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices/configuration.html#application-related-configuration
@@ -17,7 +18,7 @@ framework:
         resource: '%kernel.project_dir%/app/config/routing.yml'
         strict_requirements: ~
     form: ~
-    csrf_protection: ~
+    csrf_protection: false
     validation: { enable_annotations: true }
     #serializer: { enable_annotations: true }
     templating:
@@ -75,6 +76,7 @@ stof_doctrine_extensions:
     default_locale: fr_FR
     orm:
         default:
+            blameable: true
             timestampable: true
 
 # FOS Rest
@@ -107,10 +109,45 @@ fos_rest:
     param_fetcher_listener:
         enabled: true
 
-#sensio_framework_extra:
-#    view: { annotations: false }
-sensio_framework_extra:
-    request: { converters: true }
-
 # API doc
 nelmio_api_doc: ~
+
+# FOS User Bundle
+fos_user:
+    db_driver: orm # other valid values are 'mongodb' and 'couchdb'
+    firewall_name: api
+    user_class: UserBundle\Entity\User
+    from_email:
+        address: "testaments-de-poilus@karl-pineau.fr"
+        sender_name: "Karl Pineau"
+    registration:
+        confirmation:
+            enabled: true
+        form:
+            type: UserBundle\Form\RegistrationType
+            validation_groups: [UserRegistration]
+    profile:
+        form:
+            type: UserBundle\Form\ProfileType
+            validation_groups: [UserProfile]
+
+# FOS OAuth Server
+fos_oauth_server:
+    db_driver: orm       # Drivers available: orm, mongodb, or propel
+    client_class:        UserBundle\Entity\Client
+    access_token_class:  UserBundle\Entity\AccessToken
+    refresh_token_class: UserBundle\Entity\RefreshToken
+    auth_code_class:     UserBundle\Entity\AuthCode
+    service:
+        user_provider: fos_user.user_provider.username
+        options:
+            access_token_lifetime: 15768000
+
+
+# JMS Serialize
+#jms_serializer:
+#    metadata:
+#        directories:
+#            FOSUB:
+#                namespace_prefix: "FOS\\UserBundle"
+#                path: "%kernel.root_dir%/serializer/FOSUserBundle"

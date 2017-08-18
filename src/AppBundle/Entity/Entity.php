@@ -96,6 +96,16 @@ class Entity
      *
      * @var array
      *
+     * @ORM\Column(name="keywords", type="array", nullable=true)
+     */
+    private $keywords;
+
+    /**
+     * @Serializer\Since("1.0")
+     * @Serializer\Expose
+     *
+     * @var array
+     *
      * @ORM\Column(name="listDepicts", type="array", nullable=true)
      */
     private $listDepicts;
@@ -265,5 +275,29 @@ class Entity
     public function getLogs()
     {
         return $this->logs;
+    }
+
+    /**
+     * Set keywords
+     *
+     * @param array $keywords
+     *
+     * @return Entity
+     */
+    public function setKeywords($keywords)
+    {
+        $this->keywords = $keywords;
+
+        return $this;
+    }
+
+    /**
+     * Get keywords
+     *
+     * @return array
+     */
+    public function getKeywords()
+    {
+        return $this->keywords;
     }
 }
