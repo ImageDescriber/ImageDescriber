@@ -6,6 +6,7 @@ use AppBundle\Entity\Entity;
 
 use AppBundle\Form\EntityType;
 use AppBundle\Repository\EntityRepository;
+use Doctrine\ORM\QueryBuilder;
 use FOS\RestBundle\Controller\FOSRestController;
 use FOS\RestBundle\Controller\Annotations as Rest;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -26,6 +27,9 @@ class EntityController extends FOSRestController
      *
      * @QueryParam(name="qwd", requirements="\d+", default="", description="Identifier of Wikidata element")
      * @QueryParam(name="random", requirements="false|true", default="false", description="Return a random item")
+     * @QueryParam(name="keyword", description="Looks for specific items")
+     * @QueryParam(name="depicts", requirements="false|true", default="false", description="Return the list of the entities with depicts")
+     * @QueryParam(name="count", requirements="false|true", default="false", description="Return the number of results")
      *
      * @Doc\ApiDoc(
      *     section="Entities",
@@ -41,22 +45,49 @@ class EntityController extends FOSRestController
     {
         $qwd = $paramFetcher->get('qwd');
         $random = $paramFetcher->get('random');
+        $keyword = $paramFetcher->get('keyword');
+        $depicts = $paramFetcher->get('depicts');
+        $count = $paramFetcher->get('count');
 
-        $repository = $this->getDoctrine()->getManager()->getRepository('AppBundle:Entity');
-        /* @var $repository EntityRepository */
-        if($qwd != "") {
-            $entities = $repository->findBy(array("qwd" =>$qwd));
-        } elseif($random == "true") {
-            $entities = $repository->findAll();
-            $nbEntities = count($entities);
-            $randItem = $entities[rand(0, $nbEntities-1)];
-            $entities = [$randItem];
+        if($qwd != "" or $random == "true") {
+            $repository = $this->getDoctrine()->getManager()->getRepository('AppBundle:Entity');
+            /* @var $repository EntityRepository */
+            if($qwd != "") {
+                $entities = $repository->findBy(array("qwd" =>$qwd));
+            } elseif ($random == "true"){
+                $entities = $repository->findAll();
+                $nbEntities = count($entities);
+                $randItem = $entities[rand(0, $nbEntities - 1)];
+                $entities = [$randItem];
+            }
+            /* @var $entities Entity[] */
+            shuffle($entities);
+            return $entities;
         } else {
-            $entities = $repository->findAll();
-        }
+            /** @var $qb QueryBuilder */
+            $qb = $this->getDoctrine()->getManager()->createQueryBuilder();
+            $qb->select('e')
+                ->from("AppBundle:Entity", 'e');
 
-        /* @var $entities Entity[] */
-        return $entities;
+            if ($depicts == "true") {
+                $qb->where('e.listDepicts != :null')->setParameter('null', serialize(null))//not null
+                    ->andWhere('e.listDepicts != :empty')->setParameter('empty', serialize([])); //not empty
+            } elseif ($keyword != "") {
+                $qb->where($qb->expr()->like('e.keywords', $qb->expr()->literal("%$keyword%")));
+
+            }
+
+            if($count == "false") {
+                /* @var $entities Entity[] */
+                $entities = $qb->getQuery()->getResult();
+                shuffle($entities);
+                return $entities;
+            } elseif($count == "true") {
+                $qb->getQuery();
+                $number = $qb->select('COUNT(e)')->getQuery()->getSingleScalarResult();
+                return new JsonResponse($number);
+            }
+        }
     }
 
     /**
@@ -231,7 +262,7 @@ class EntityController extends FOSRestController
         $form = $this->createForm(EntityType::class, $entity);
         $form->submit($request->request->all(), $clearMissing);
         if ($form->isValid()) {
-            $em->merge($entity);
+            $em->persist($entity);
             $em->flush();
             return $entity;
         } else {

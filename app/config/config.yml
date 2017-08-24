@@ -106,8 +106,7 @@ fos_rest:
             - { path: '^/', priorities: ['json'], fallback_format: 'json' }
     exception:
         enabled: true
-    param_fetcher_listener:
-        enabled: true
+    param_fetcher_listener: true
 
 # API doc
 nelmio_api_doc: ~
@@ -145,9 +144,35 @@ fos_oauth_server:
 
 
 # JMS Serialize
-#jms_serializer:
-#    metadata:
-#        directories:
-#            FOSUB:
-#                namespace_prefix: "FOS\\UserBundle"
-#                path: "%kernel.root_dir%/serializer/FOSUserBundle"
+jms_serializer:
+    metadata:
+        directories:
+            FOSUB:
+                namespace_prefix: "FOS\\UserBundle"
+                path: "%kernel.root_dir%/serializer/FOSUserBundle"
+
+## Nelmio Cors
+nelmio_cors:
+    defaults:
+        allow_credentials: false
+        allow_origin: ['*']
+        allow_headers: ['*']
+        allow_methods: ['POST', 'PATCH', 'GET', 'DELETE']
+        expose_headers: ['POST', 'PATCH', 'GET']
+        max_age: 3600
+        hosts: []
+        origin_regex: false
+        forced_allow_origin_value: ~
+    paths:
+        '^/':
+            allow_origin: ['*']
+            allow_headers: ['*']
+            allow_methods: ['POST', 'PATCH', 'GET', 'DELETE']
+            max_age: 3600
+#        '^/':
+#            origin_regex: true
+#            allow_origin: ['^http://localhost:[0-9]+']
+#            allow_headers: ['X-Custom-Auth']
+#            allow_methods: ['POST', 'PATCH', 'GET', 'DELETE']
+#            max_age: 3600
+#            hosts: ['^api\.']

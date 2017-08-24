@@ -86,7 +86,7 @@ class Entity
      * @Assert\NotBlank()
      * @Assert\Url()
      *
-     * @ORM\Column(name="image", type="text")
+     * @ORM\Column(name="image", type="text", nullable=false)
      */
     private $image;
 
