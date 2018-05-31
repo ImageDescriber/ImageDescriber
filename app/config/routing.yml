@@ -23,6 +23,10 @@ logs:
     type:     rest
     resource: AppBundle\Controller\LogController
 
+depicts:
+    type:     rest
+    resource: AppBundle\Controller\DepictController
+
 ranks:
     type:     rest
     resource: AppBundle\Controller\RankController

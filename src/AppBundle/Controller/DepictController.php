@@ -3,12 +3,14 @@
 namespace AppBundle\Controller;
 
 use AppBundle\Entity\Entity;
-use AppBundle\Entity\Log;
+use AppBundle\Entity\Depict;
 
-use AppBundle\Form\LogType;
+use AppBundle\Form\DepictType;
+use AppBundle\Repository\DepictRepository;
 use AppBundle\Repository\EntityRepository;
 use FOS\RestBundle\Controller\FOSRestController;
 use FOS\RestBundle\Controller\Annotations as Rest;
+use JMS\Serializer\SerializationContext;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -19,49 +21,69 @@ use FOS\RestBundle\Request\ParamFetcher;
 use Nelmio\ApiDocBundle\Annotation as Doc;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 
-class LogController extends FOSRestController
+class DepictController extends FOSRestController
 {
     /**
-     * @Rest\Get("/logs")
-     * @Rest\View()
+     * @Rest\Get("/depicts")
      *
-     * @QueryParam(name="qwd", requirements="\d+", default="", description="Identifier of Wikidata element")
+     * @QueryParam(name="qwdDepict", requirements="\d+", default="", description="Identifier of Wikidata element")
+     * @QueryParam(name="qwdEntity", requirements="\d+", default="", description="Identifier of Wikidata element")
+     * @QueryParam(name="profile",  nullable=true, description="Search profile to apply")
      *
      * @Doc\ApiDoc(
-     *     section="Logs",
+     *     section="Depicts",
      *     resource=true,
-     *     description="Get the list of all logs",
+     *     description="Get the list of all depicts",
      *     statusCodes={
      *         200="Returned when fetched",
      *         400="Returned when a violation is raised by validation"
      *     }
      * )
      */
-    public function getLogsAction(Request $request, ParamFetcher $paramFetcher)
+    public function getDepictsAction(Request $request, ParamFetcher $paramFetcher)
     {
-        $qwd = $paramFetcher->get('qwd');
+        /* @var $repositoryDepict DepictRepository */
+        /* @var $repositoryEntity EntityRepository */
 
-        $repository = $this->getDoctrine()->getManager()->getRepository('AppBundle:Log');
-        /* @var $repository EntityRepository */
-        if($qwd != "") {
-            $entity = $this->getDoctrine()->getManager()->getRepository('AppBundle:Entity')->findOneByQwd($qwd);
-            $logs = $repository->findBy(array("entity" => $entity));
-        } else {
-            $logs = $repository->findBy(array(), array('createDate' => 'DESC'));
+        $qwdDepict = $paramFetcher->get('qwdDepict');
+        $qwdEntity = $paramFetcher->get('qwdEntity');
+
+        $repositoryDepict = $this->getDoctrine()->getManager()->getRepository('AppBundle:Depict');
+        $repositoryEntity = $this->getDoctrine()->getManager()->getRepository('AppBundle:Entity');
+
+        $query = [];
+
+        if($qwdDepict != "") {
+            $query["qwd"] = $qwdDepict;
+        }
+        if($qwdEntity != "") {
+            $entity = $repositoryEntity->findOneBy(array("qwd" => $qwdEntity));
+            if($entity != null) {
+                $query["entity"] = $entity['id'];
+            }
         }
 
-        /* @var $logs Log[] */
-        return $logs;
+        $depicts = $repositoryDepict->findBy($query, array('createDate' => 'DESC'));
+        /* @var $depicts Depict[] */
+
+
+        if($paramFetcher->get('profile') == '') {
+            $profile = ["id", "depict"];
+        } else {
+            $profile = explode(',', $paramFetcher->get('profile'));
+        }
+
+        return new JsonResponse(json_decode($this->get('jms_serializer')->serialize($depicts, 'json', SerializationContext::create()->enableMaxDepthChecks()->setGroups($profile))));
     }
 
     /**
-     * @Rest\Get("/logs/{id}")
+     * @Rest\Get("/depicts/{id}")
      * @Rest\View
      *
      * @Doc\ApiDoc(
-     *     section="Logs",
+     *     section="Depicts",
      *     resource=true,
-     *     description="Return one log",
+     *     description="Return one depict",
      *     requirements={
      *         {
      *             "name"="id",
@@ -76,27 +98,27 @@ class LogController extends FOSRestController
      *     }
      * )
      */
-    public function getLogAction(Request $request)
+    public function getDepictAction(Request $request)
     {
         $em = $this->getDoctrine()->getManager();
-        $log = $em->getRepository('AppBundle:Log')->find($request->get('id'));
-        /* @var $log Log */
+        $depict = $em->getRepository('AppBundle:Depict')->find($request->get('id'));
+        /* @var $depict Depict */
 
-        if (empty($log)) {
-            return new JsonResponse(['message' => 'Log not found'], Response::HTTP_NOT_FOUND);
+        if (empty($depict)) {
+            return new JsonResponse(['message' => 'Depict not found'], Response::HTTP_NOT_FOUND);
         }
 
-        return $log;
+        return $depict;
     }
 
     /**
-     * @Rest\Post("/logs")
+     * @Rest\Post("/depicts")
      * @Rest\View(statusCode=Response::HTTP_CREATED)
      *
      * @Doc\ApiDoc(
-     *     section="Logs",
+     *     section="Depicts",
      *     resource=true,
-     *     description="Create a new log entry",
+     *     description="Create a new depict entry",
      *     requirements={
      *         {
      *             "name"="entity",
@@ -129,18 +151,18 @@ class LogController extends FOSRestController
      *     }
      * )
      */
-    public function postLogAction(Request $request)
+    public function postDepictAction(Request $request)
     {
         $em = $this->getDoctrine()->getManager();
 
-        $log = new Log();
-        $form = $this->createForm(LogType::class, $log);
+        $depict = new Depict();
+        $form = $this->createForm(DepictType::class, $depict);
         $form->submit($request->request->all());
 
         if ($form->isValid()) {
-            $em->persist($log);
+            $em->persist($depict);
             $em->flush();
-            return $log;
+            return $depict;
         } else {
             return $form;
         }
@@ -148,11 +170,11 @@ class LogController extends FOSRestController
 
     /**
      * @Rest\View()
-     * @Rest\Put("/logs/{id}")
+     * @Rest\Put("/depicts/{id}")
      * @Doc\ApiDoc(
-     *     section="Logs",
+     *     section="Depicts",
      *     resource=true,
-     *     description="Update an existing log",
+     *     description="Update an existing depict",
      *     requirements={
      *         {
      *             "name"="entity",
@@ -185,18 +207,18 @@ class LogController extends FOSRestController
      *     }
      * )
      */
-    public function updateLogAction(Request $request)
+    public function updateDepictAction(Request $request)
     {
-        return $this->updateLog($request, true);
+        return $this->updateDepict($request, true);
     }
 
     /**
      * @Rest\View()
-     * @Rest\Patch("/logs/{id}")
+     * @Rest\Patch("/depicts/{id}")
      * @Doc\ApiDoc(
-     *     section="Logs",
+     *     section="Depicts",
      *     resource=true,
-     *     description="Update an existing log",
+     *     description="Update an existing depict",
      *     requirements={
      *         {
      *             "name"="entity",
@@ -229,42 +251,42 @@ class LogController extends FOSRestController
      *     }
      * )
      */
-    public function patchLogAction(Request $request)
+    public function patchDepictAction(Request $request)
     {
-        return $this->updateLog($request, false);
+        return $this->updateDepict($request, false);
     }
 
-    private function updateLog(Request $request, $clearMissing)
+    private function updateDepict(Request $request, $clearMissing)
     {
         $em = $this->getDoctrine()->getManager();
-        $log = $em->getRepository('AppBundle:Log')->find($request->get('id'));
-        /* @var $log Log */
-        if (empty($log)) {return new JsonResponse(['message' => 'Log not found'], Response::HTTP_NOT_FOUND);}
+        $depict = $em->getRepository('AppBundle:Depict')->find($request->get('id'));
+        /* @var $depict Depict */
+        if (empty($depict)) {return new JsonResponse(['message' => 'Depict not found'], Response::HTTP_NOT_FOUND);}
 
-        $form = $this->createForm(LogType::class, $log);
+        $form = $this->createForm(DepictType::class, $depict);
         $form->submit($request->request->all(), $clearMissing);
         if ($form->isValid()) {
-            $em->merge($log);
+            $em->merge($depict);
             $em->flush();
-            return $log;
+            return $depict;
         } else {
             return $form;
         }
     }
 
     /**
-     * @Rest\Delete("/logs/{id}")
+     * @Rest\Delete("/depicts/{id}")
      * @Rest\View(statusCode=Response::HTTP_NO_CONTENT)
      * @Doc\ApiDoc(
-     *     section="Log",
+     *     section="Depict",
      *     resource=true,
-     *     description="Remove a log",
+     *     description="Remove a depict",
      *     requirements={
      *         {
      *             "name"="id",
      *             "dataType"="integer",
      *             "requirement"="\d+",
-     *             "description"="The unique identifier of the log.",
+     *             "description"="The unique identifier of the depict.",
      *         }
      *     },
      *     statusCodes={
@@ -274,14 +296,14 @@ class LogController extends FOSRestController
      * )
      * @Security("is_granted('ROLE_ADMIN')")
      */
-    public function removeLogAction(Request $request)
+    public function removeDepictAction(Request $request)
     {
         $em = $this->getDoctrine()->getManager();
-        $log = $em->getRepository('AppBundle:Log')->find($request->get('id'));
-        /* @var $log Log */
+        $depict = $em->getRepository('AppBundle:Depict')->find($request->get('id'));
+        /* @var $depict Depict */
 
-        if ($log) {
-            $em->remove($log);
+        if ($depict) {
+            $em->remove($depict);
             $em->flush();
         }
     }

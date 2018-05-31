@@ -20,44 +20,13 @@ use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
  * @UniqueEntity("qwd")
  * @UniqueEntity("image")
  *
- * @Hateoas\Relation(
- *      "self",
- *      href = @Hateoas\Route(
- *          "get_entity",
- *          parameters = { "id" = "expr(object.getId())" },
- *          absolute = true
- *      )
- * )
- * @Hateoas\Relation(
- *      "modify",
- *      href = @Hateoas\Route(
- *          "update_entity",
- *          parameters = { "id" = "expr(object.getId())" },
- *          absolute = true
- *      )
- * )
- * @Hateoas\Relation(
- *      "patch",
- *      href = @Hateoas\Route(
- *          "patch_entity",
- *          parameters = { "id" = "expr(object.getId())" },
- *          absolute = true
- *      )
- * )
- * @Hateoas\Relation(
- *      "delete",
- *      href = @Hateoas\Route(
- *          "remove_entity",
- *          parameters = { "id" = "expr(object.getId())" },
- *          absolute = true
- *      )
- * )
  */
 class Entity
 {
     /**
      * @Serializer\Since("1.0")
      * @Serializer\Expose
+     * @Serializer\Groups({"full", "id", "entity"})
      *
      * @var int
      *
@@ -68,8 +37,11 @@ class Entity
     private $id;
 
     /**
+     * The Wikidata number of the entity
+     *
      * @Serializer\Since("1.0")
      * @Serializer\Expose
+     * @Serializer\Groups({"full", "id", "entity"})
      *
      * @var int
      * @Assert\NotBlank()
@@ -79,8 +51,11 @@ class Entity
     private $qwd;
 
     /**
+     * The URL of the artwork's image
+     *
      * @Serializer\Since("1.0")
      * @Serializer\Expose
+     * @Serializer\Groups({"full", "content", "entity"})
      *
      * @var string
      * @Assert\NotBlank()
@@ -91,8 +66,24 @@ class Entity
     private $image;
 
     /**
+     * The Labels of the entity related to the depict
+     *
      * @Serializer\Since("1.0")
      * @Serializer\Expose
+     * @Serializer\Groups({"full", "content", "entity"})
+     *
+     * @var array
+     *
+     * @ORM\Column(name="labels", type="array", nullable=true)
+     */
+    private $labels;
+
+    /**
+     * Keywords are used to find collections or artwork
+     *
+     * @Serializer\Since("1.0")
+     * @Serializer\Expose
+     * @Serializer\Groups({"full", "content", "entity"})
      *
      * @var array
      *
@@ -101,18 +92,22 @@ class Entity
     private $keywords;
 
     /**
+     * The status of submission
+     *
      * @Serializer\Since("1.0")
      * @Serializer\Expose
+     * @Serializer\Groups({"full", "content", "entity"})
      *
-     * @var array
+     * @var string
      *
-     * @ORM\Column(name="listDepicts", type="array", nullable=true)
+     * @ORM\Column(name="status", type="string", length=255, nullable=true)
      */
-    private $listDepicts;
+    private $status;
 
     /**
      * @Serializer\Since("1.0")
      * @Serializer\Expose
+     * @Serializer\Groups({"full", "metadata", "entity"})
      *
      * @var \DateTime
      *
@@ -124,6 +119,16 @@ class Entity
     /**
      * @Serializer\Since("1.0")
      * @Serializer\Expose
+     * @Serializer\Groups({"full", "depicts", "entity"})
+     *
+     * @ORM\OneToMany(targetEntity="Depict", mappedBy="entity", cascade={"persist", "remove"})
+     */
+    private $depicts;
+
+    /**
+     * @Serializer\Since("1.0")
+     * @Serializer\Expose
+     * @Serializer\Groups({"full", "logs", "entity"})
      *
      * @ORM\OneToMany(targetEntity="Log", mappedBy="entity", cascade={"persist", "remove"})
      */
@@ -138,6 +143,38 @@ class Entity
     public function getId()
     {
         return $this->id;
+    }
+    /**
+     * Constructor
+     */
+    public function __construct()
+    {
+        $this->depicts = new \Doctrine\Common\Collections\ArrayCollection();
+        $this->logs = new \Doctrine\Common\Collections\ArrayCollection();
+    }
+
+    /**
+     * Set labels
+     *
+     * @param array $labels
+     *
+     * @return Entity
+     */
+    public function setLabels($labels)
+    {
+        $this->labels = $labels;
+
+        return $this;
+    }
+
+    /**
+     * Get labels
+     *
+     * @return array
+     */
+    public function getLabels()
+    {
+        return $this->labels;
     }
 
     /**
@@ -165,27 +202,75 @@ class Entity
     }
 
     /**
-     * Set listDepicts
+     * Set image
      *
-     * @param array $listDepicts
+     * @param string $image
      *
      * @return Entity
      */
-    public function setListDepicts($listDepicts)
+    public function setImage($image)
     {
-        $this->listDepicts = $listDepicts;
+        $this->image = $image;
 
         return $this;
     }
 
     /**
-     * Get listDepicts
+     * Get image
+     *
+     * @return string
+     */
+    public function getImage()
+    {
+        return $this->image;
+    }
+
+    /**
+     * Set keywords
+     *
+     * @param array $keywords
+     *
+     * @return Entity
+     */
+    public function setKeywords($keywords)
+    {
+        $this->keywords = $keywords;
+
+        return $this;
+    }
+
+    /**
+     * Get keywords
      *
      * @return array
      */
-    public function getListDepicts()
+    public function getKeywords()
     {
-        return $this->listDepicts;
+        return $this->keywords;
+    }
+
+    /**
+     * Set status
+     *
+     * @param string $status
+     *
+     * @return Entity
+     */
+    public function setStatus($status)
+    {
+        $this->status = $status;
+
+        return $this;
+    }
+
+    /**
+     * Get status
+     *
+     * @return string
+     */
+    public function getStatus()
+    {
+        return $this->status;
     }
 
     /**
@@ -213,34 +298,37 @@ class Entity
     }
 
     /**
-     * Set image
+     * Add depict
      *
-     * @param string $image
+     * @param \AppBundle\Entity\Depict $depict
      *
      * @return Entity
      */
-    public function setImage($image)
+    public function addDepict(\AppBundle\Entity\Depict $depict)
     {
-        $this->image = $image;
+        $this->depicts[] = $depict;
 
         return $this;
     }
 
     /**
-     * Get image
+     * Remove depict
      *
-     * @return string
+     * @param \AppBundle\Entity\Depict $depict
      */
-    public function getImage()
+    public function removeDepict(\AppBundle\Entity\Depict $depict)
     {
-        return $this->image;
+        $this->depicts->removeElement($depict);
     }
+
     /**
-     * Constructor
+     * Get depicts
+     *
+     * @return \Doctrine\Common\Collections\Collection
      */
-    public function __construct()
+    public function getDepicts()
     {
-        $this->logs = new \Doctrine\Common\Collections\ArrayCollection();
+        return $this->depicts;
     }
 
     /**
@@ -275,29 +363,5 @@ class Entity
     public function getLogs()
     {
         return $this->logs;
-    }
-
-    /**
-     * Set keywords
-     *
-     * @param array $keywords
-     *
-     * @return Entity
-     */
-    public function setKeywords($keywords)
-    {
-        $this->keywords = $keywords;
-
-        return $this;
-    }
-
-    /**
-     * Get keywords
-     *
-     * @return array
-     */
-    public function getKeywords()
-    {
-        return $this->keywords;
     }
 }

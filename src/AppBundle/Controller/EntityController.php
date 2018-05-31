@@ -9,6 +9,7 @@ use AppBundle\Repository\EntityRepository;
 use Doctrine\ORM\QueryBuilder;
 use FOS\RestBundle\Controller\FOSRestController;
 use FOS\RestBundle\Controller\Annotations as Rest;
+use JMS\Serializer\SerializationContext;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -23,13 +24,13 @@ class EntityController extends FOSRestController
 {
     /**
      * @Rest\Get("/entities")
-     * @Rest\View()
      *
      * @QueryParam(name="qwd", requirements="\d+", default="", description="Identifier of Wikidata element")
      * @QueryParam(name="random", requirements="false|true", default="false", description="Return a random item")
      * @QueryParam(name="keyword", description="Looks for specific items")
      * @QueryParam(name="depicts", requirements="false|true", default="false", description="Return the list of the entities with depicts")
      * @QueryParam(name="count", requirements="false|true", default="false", description="Return the number of results")
+     * @QueryParam(name="profile",  nullable=true, description="Search profile to apply")
      *
      * @Doc\ApiDoc(
      *     section="Entities",
@@ -48,46 +49,37 @@ class EntityController extends FOSRestController
         $keyword = $paramFetcher->get('keyword');
         $depicts = $paramFetcher->get('depicts');
         $count = $paramFetcher->get('count');
+        $repository = $this->getDoctrine()->getManager()->getRepository('AppBundle:Entity');
 
         if($qwd != "" or $random == "true") {
-            $repository = $this->getDoctrine()->getManager()->getRepository('AppBundle:Entity');
             /* @var $repository EntityRepository */
+            /* @var $entities Entity */
             if($qwd != "") {
-                $entities = $repository->findBy(array("qwd" =>$qwd));
-            } elseif ($random == "true"){
-                $entities = $repository->findAll();
-                $nbEntities = count($entities);
-                $randItem = $entities[rand(0, $nbEntities - 1)];
-                $entities = [$randItem];
+                $response = $repository->findOneBy(array("qwd" =>$qwd));
+            } elseif ($random == "true") {
+                $response = $repository->find(rand(0, $repository->countEntities() - 1));
             }
-            /* @var $entities Entity[] */
-            shuffle($entities);
-            return $entities;
         } else {
-            /** @var $qb QueryBuilder */
-            $qb = $this->getDoctrine()->getManager()->createQueryBuilder();
-            $qb->select('e')
-                ->from("AppBundle:Entity", 'e');
+            $entities = $repository->findBy(array(), array(), 100);
 
-            if ($depicts == "true") {
-                $qb->where('e.listDepicts != :null')->setParameter('null', serialize(null))//not null
-                    ->andWhere('e.listDepicts != :empty')->setParameter('empty', serialize([])); //not empty
-            } elseif ($keyword != "") {
-                $qb->where($qb->expr()->like('e.keywords', $qb->expr()->literal("%$keyword%")));
+            // Manage depict
+            // Manage keyword
 
-            }
-
-            if($count == "false") {
-                /* @var $entities Entity[] */
-                $entities = $qb->getQuery()->getResult();
-                shuffle($entities);
-                return $entities;
-            } elseif($count == "true") {
-                $qb->getQuery();
-                $number = $qb->select('COUNT(e)')->getQuery()->getSingleScalarResult();
-                return new JsonResponse($number);
+            if($count == "true") {
+                $response = count($entities);
+            } else {
+                $response = $entities;
             }
         }
+
+
+        if($paramFetcher->get('profile') == '') {
+            $profile = ["id", "entity"];
+        } else {
+            $profile = explode(',', $paramFetcher->get('profile'));
+        }
+
+        return new JsonResponse(json_decode($this->get('jms_serializer')->serialize($response, 'json', SerializationContext::create()->enableMaxDepthChecks()->setGroups($profile))));
     }
 
     /**
@@ -158,6 +150,7 @@ class EntityController extends FOSRestController
      *         400="Returned when a violation is raised by validation"
      *     }
      * )
+     * @Security("is_granted('ROLE_ADMIN')")
      */
     public function postEntityAction(Request $request)
     {
@@ -208,6 +201,7 @@ class EntityController extends FOSRestController
      *         400="Returned when a violation is raised by validation"
      *     }
      * )
+     * @Security("is_granted('ROLE_ADMIN')")
      */
     public function updateEntityAction(Request $request)
     {
@@ -246,6 +240,7 @@ class EntityController extends FOSRestController
      *         400="Returned when a violation is raised by validation"
      *     }
      * )
+     * @Security("is_granted('ROLE_ADMIN')")
      */
     public function patchEntityAction(Request $request)
     {

@@ -18,10 +18,7 @@ class LogType extends AbstractType
         $builder
             ->add('status',         TextType::class, array("required" => true))
             ->add('ip',             TextType::class, array("required" => false))
-            ->add('entity',         \Symfony\Bridge\Doctrine\Form\Type\EntityType::class, array(
-                'class' => 'AppBundle:Entity',
-                'required' => true
-            ));
+            ->add('entity',         \Symfony\Bridge\Doctrine\Form\Type\EntityType::class, array('class' => 'AppBundle:Entity', 'required' => true ));
     }
     
     /**

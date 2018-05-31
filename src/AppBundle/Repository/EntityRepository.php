@@ -10,4 +10,10 @@ namespace AppBundle\Repository;
  */
 class EntityRepository extends \Doctrine\ORM\EntityRepository
 {
+    public function countEntities() {
+        return $this->createQueryBuilder('e')
+            ->select('COUNT(e)')
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
 }

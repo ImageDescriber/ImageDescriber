@@ -94,6 +94,9 @@ class Log
     protected $createDate;
 
     /**
+     * @Serializer\Since("1.0")
+     * @Serializer\Expose
+     *
      * @var string
      * @Assert\Ip
      *
